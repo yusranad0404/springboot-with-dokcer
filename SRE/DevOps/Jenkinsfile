@@ -2,51 +2,43 @@ pipeline {
     agent any
 
     environment {
-        // Define any environment variables here
-        DOCKER_IMAGE = "yusranadepratama/demo-springboot"  // Replace with your Docker Hub username and repo name
-        KUBERNETES_NAMESPACE = "default"  // The Kubernetes namespace to deploy to
+        DOCKER_IMAGE = "yusranadepratama/demo-springboot"
+        KUBERNETES_NAMESPACE = "default"
         DEPLOYMENT_NAME = "hello-world-deployment"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Pull code from the repository
-                checkout scm
-            }
-        }
-
-        stage('Build Maven Project') {
-            steps {
-                // Build the Spring Boot application using Maven
-                sh 'mvn clean install -DskipTests'
+                git branch: 'main', url: 'https://github.com/yusranad0404/springboot-with-dokcer.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image
                 sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                // Log in to Docker Hub and push the image
                 withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_PASSWORD')]) {
-                    sh 'echo $DOCKER_HUB_PASSWORD | docker login -u your-dockerhub-username --password-stdin'
+                    sh 'echo $DOCKER_HUB_PASSWORD | docker login -u yusranadepratama --password-stdin'
                     sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to Minikube') {
             steps {
-                // Update the Kubernetes deployment with the new image
-                sh """
-                kubectl set image deployment/$DEPLOYMENT_NAME hello-world-container=$DOCKER_IMAGE:$BUILD_NUMBER \
-                --namespace=$KUBERNETES_NAMESPACE
-                """
+                script {
+                    sh "sed -i 's+${DOCKER_IMAGE}:.*+${DOCKER_IMAGE}:${BUILD_NUMBER}+g' SRE/DevOps/deployment.yml"
+
+                    sh '''
+                    kubectl apply -f SRE/DevOps/deployment.yml
+                    kubectl apply -f SRE/DevOps/service.yml
+                    '''
+                }
             }
         }
     }
