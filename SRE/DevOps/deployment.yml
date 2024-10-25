@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-deployment
+  labels:
+    app: hello-world
+spec:
+  replicas: 3  # Number of desired pods
+  selector:
+    matchLabels:
+      app: hello-world
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - name: hello-world-container
+        image: your-dockerhub-username/hello-world:latest  # Replace with your Docker image
+        ports:
+        - containerPort: 8080  # The port that your Spring Boot app is listening on
+        env:
+        - name: SPRING_PROFILES_ACTIVE  # Example of an environment variable for Spring Boot
+          value: "prod"
+        resources:  # Optional: Resource requests and limits
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        livenessProbe:  # Optional: Liveness probe to check if the app is running
+          httpGet:
+            path: /actuator/health  # Adjust to your health check endpoint
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:  # Optional: Readiness probe to check if the app is ready to serve traffic
+          httpGet:
+            path: /actuator/health  # Adjust to your health check endpoint
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10

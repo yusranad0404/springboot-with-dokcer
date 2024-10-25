@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define any environment variables here
+        DOCKER_IMAGE = "yusranadepratama/demo-springboot"  // Replace with your Docker Hub username and repo name
+        KUBERNETES_NAMESPACE = "default"  // The Kubernetes namespace to deploy to
+        DEPLOYMENT_NAME = "hello-world-deployment"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Pull code from the repository
+                checkout scm
+            }
+        }
+
+        stage('Build Maven Project') {
+            steps {
+                // Build the Spring Boot application using Maven
+                sh 'mvn clean install -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                // Build the Docker image
+                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                // Log in to Docker Hub and push the image
+                withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_PASSWORD')]) {
+                    sh 'echo $DOCKER_HUB_PASSWORD | docker login -u your-dockerhub-username --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Update the Kubernetes deployment with the new image
+                sh """
+                kubectl set image deployment/$DEPLOYMENT_NAME hello-world-container=$DOCKER_IMAGE:$BUILD_NUMBER \
+                --namespace=$KUBERNETES_NAMESPACE
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment successful!"
+        }
+        failure {
+            echo "Deployment failed!"
+        }
+    }
+}
