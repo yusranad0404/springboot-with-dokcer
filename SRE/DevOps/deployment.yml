@@ -16,12 +16,12 @@ spec:
     spec:
       containers:
       - name: hello-world-container
-        image: your-dockerhub-username/hello-world:latest  # Replace with your Docker image
+        image: yusranadepratama/demo-springboot:latest  # Replace with your Docker image
         ports:
         - containerPort: 8080  # The port that your Spring Boot app is listening on
         env:
         - name: SPRING_PROFILES_ACTIVE  # Example of an environment variable for Spring Boot
-          value: "prod"
+          value: "default"
         resources:  # Optional: Resource requests and limits
           requests:
             memory: "512Mi"
