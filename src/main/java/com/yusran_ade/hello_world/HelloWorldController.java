@@ -1,4 +1,4 @@
-package com.yusran_ade.controller;
+package com.yusran_ade.hello_world;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
